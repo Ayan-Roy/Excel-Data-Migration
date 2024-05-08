@@ -9,15 +9,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import com.ayanicsoft.c_tscan.activity.ActivityAddNewProduct;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.FileAsyncHttpResponseHandler;
 
@@ -36,11 +31,16 @@ public class ExcelReader {
 
 
     private FirebaseFirestore database;
-    public void readExcelFile(Context context) {
+    Context context;
+
+    public ExcelReader(Context context){
+        this.context = context;
+    }
+    public void readExcelFile() {
 
         database = FirebaseFirestore.getInstance();
 
-        String url = "https://github.com/Ayan-Roy/KIT_AyanRoy/raw/master/products_list.xls";
+        String url = "https://github.com/Ayan-Roy/Excel-Data-Migration/raw/master/products_list_demo.xls";
         AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
         asyncHttpClient.get(url, new FileAsyncHttpResponseHandler(context) {
             @Override
@@ -64,20 +64,9 @@ public class ExcelReader {
                     for (int row = 0; row < sheet.getRows(); row++) {
                         Cell cell1 = sheet.getCell(0, row);
                         Cell cell2 = sheet.getCell(1, row);
-                        Log.e(TAG, "onSuccess: "+cell1.getContents() +" -- "+cell2.getContents() );
+                        Log.e(TAG, "onSuccess: " + cell1.getContents() + " -- " + cell2.getContents());
 
-                        if(cell1.getContents().equals("") || cell2.getContents().equals("")){
-
-                        }else{
-                            insertIntoFirebaseFireStore(cell2.getContents(), cell1.getContents());
-                            Log.e(TAG, "Inserted"+ i++ );
-                        }
-
-/*                        for (int col = 0; col < sheet.getColumns(); col++) {
-                            Cell cell = sheet.getCell(col, row);
-                            String cellContent = cell.getContents();  // Get cell content
-                            Log.e(TAG, "readExcelFile: " + cellContent + "\t");
-                        }*/
+                        insertIntoFirebaseFireStore(cell2.getContents(), cell1.getContents());
                     }
 
                     workbook.close();
@@ -86,9 +75,6 @@ public class ExcelReader {
                 }
             }
         });
-
-
-        //insertIntoFirebaseFireStore("sgfdhs", "fhdjf");
     }
 
 
@@ -101,22 +87,23 @@ public class ExcelReader {
         product.put("insertDate", getCurrentDateTime());
         product.put("insertBy", "Brat");
 
-        Log.e(TAG, "insertIntoFirebaseFireStore: " );
+        Log.e(TAG, "insertIntoFirebaseFireStore: ");
         database.collection("Products_List")
                 .add(product)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
-                        Log.e(TAG, "onSuccess: Inserted");
+                        Log.e(TAG, "Inserted");
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        // If error, display a Toast error message
+                        Toast.makeText(context, "Insert Failed "+e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
+
     public String getCurrentDateTime() {
 
         Date currentDate = new Date();
